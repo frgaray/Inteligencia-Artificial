@@ -1,18 +1,18 @@
-import problems
+from problems import Puzzle8
 from bfs import bfs
 from datetime import datetime
 
 def main():
-    log_file = '.\\logs\\log.txt'
+    log_file = 'C:\\Users\\allda\\OneDrive\\Documentos\\Universidad\\Inteligencia-Artificial\\Practica1\\logs\\log.txt'
 
     initial_state = [[1,'o',2],
                      [6,3,4],
                      [7,5,8]]
     
-    p = problems.Puzzle8(initial_state)
     queue = 'fifo'
+    p = Puzzle8(initial_state)
     with open(log_file, 'w') as f:
-        f.write(f'Inica partida a las {datetime.now().strftime("%H:%M:%S")} del {datetime.now().strftime("%d/%m/%Y")}\n\n')
+        f.write(f'Inicia partida a las {datetime.now().strftime("%H:%M:%S")} del {datetime.now().strftime("%d/%m/%Y")}\n\n')
         f.write(f'Tablero inicial\n{p}\n\n')
         f.write(f'Tipo de cola: {queue}\n\n')
         f.write(f'Movimientos\n')

@@ -1,4 +1,4 @@
-Inica partida a las 00:31:41 del 26/08/2023
+Inicia partida a las 01:09:07 del 26/08/2023
 
 Tablero inicial
 [1, 'o', 2]
@@ -72,6 +72,6 @@ Movimientos
 [6, 3, 4]
 [7, 5, 8]
 
-Finaliza partida a las 00:31:43
+Finaliza partida a las 01:09:09
 Total de Movimientos: 16
-Total de Nodos Expandidos: 10708
+Total de Nodos Expandidos: 9248
