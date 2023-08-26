@@ -2,7 +2,25 @@ from problems import Problem, Node
 from queue import Queue, LifoQueue, PriorityQueue
 
 def bfs(problem, goal_test='early', queue='priority'):
-    """Best First Search"""
+    """Best-First Search
+    
+    Implementación del algoritmo de Best First Search.
+
+    Params
+    ------
+    problem: Problem
+        El problema al cual se le quiere aplicar el algoritmo. Ver @Problem.
+    goal_test: str
+        Bandera para indicar cómo verificar los estados meta.
+        - 'early' para Early Goal Test
+        - 'late'  para Late  Goal Test
+    queue: str
+        Bandera para indicar el tipo de cola/pila a utilizar. Según el tipo de
+        cola/pila cambia la forma de búsqueda.
+        - 'fifo'  para Breadth-First Search
+        - 'lifo'  para   Depth-First Search
+        - 'priority' para Best-First Search
+    """
     if not isinstance(problem, Problem):
         print('Sólo se puede aplicar BFS a instancias de la clase @Problem')
         return
