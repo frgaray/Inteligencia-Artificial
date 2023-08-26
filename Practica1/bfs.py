@@ -29,9 +29,10 @@ def bfs(problem, goal_test='early', queue='priority'):
     goals = problem.goals
 
     explorados = [initial_state]
+    n_expandidos = 0
     
     if goal_test == 'early' and initial_state in goals:
-        return explorados
+        return explorados, n_expandidos
     
     if   queue == 'fifo':
         frontier = Queue()
@@ -44,17 +45,16 @@ def bfs(problem, goal_test='early', queue='priority'):
         return
     frontier.put(Node(problem))
     
-    c = 0
     while not frontier.empty():
         actual = frontier.get()
 
         if goal_test == 'late' and actual.state in goals:
-            return actual
+            return actual, n_expandidos
         
         for child, action in actual.expand():
             c += 1
             if goal_test == 'early' and child.state in goals:
-                return Node(child, actual, action), c
+                return Node(child, actual, action), n_expandidos
             if child.state not in explorados:
                 explorados.append(child.state)
                 frontier.put(Node(child, actual, action))
