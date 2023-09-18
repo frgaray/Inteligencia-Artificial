@@ -1,7 +1,7 @@
 from problems import Problem, Node
 from queue import Queue, LifoQueue, PriorityQueue
 
-def bfs(problem, goal_test='early', queue='priority'):
+def bfs(problem, goal_test='early', queue='priority', w=1):
     """Best-First Search
     
     Implementación del algoritmo de Best First Search.
@@ -52,12 +52,12 @@ def bfs(problem, goal_test='early', queue='priority'):
             return actual, n_expandidos
         
         for child, action in actual.expand():
-            c += 1
+            n_expandidos += 1
             if goal_test == 'early' and child.state in goals:
                 return Node(child, actual, action), n_expandidos
             if child.state not in explorados:
                 explorados.append(child.state)
-                frontier.put(Node(child, actual, action))
+                frontier.put(Node(child, actual, action, actual.cost + 1, w))
     
     print('No se encontró la meta')
                 

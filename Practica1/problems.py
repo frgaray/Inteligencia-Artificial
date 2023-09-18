@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 import copy
+from dataclasses import dataclass, field
+from typing import Any
 
 class Problem(ABC):
     """Clase abstracta para problemas.
@@ -39,17 +41,22 @@ class Problem(ABC):
                 for child in (self.action(action) for action in self.actions)
                 if child]
 
+@dataclass(order=True)
 class Node:
     """Clase que representa una tupla para @Problem.
     
     Todo nodo tiene una instancia de @Problem, un nodo padre, una acción que lo originó y un costo.
     """
 
-    def __init__(self, problem, parent=None, action=None, cost=0):
-        self.state = problem
-        self.parent = parent
-        self.action = action
-        self.cost = cost
+    priority: int
+    item: Any=field(compare=False)
+
+    def __init__(self, problem, parent=None, action=None, cost=1, w=1):
+        self.state    = problem
+        self.parent   = parent
+        self.action   = action
+        self.cost     = cost
+        self.priority = self.f(w)
     
     @property
     def state(self):
@@ -57,13 +64,19 @@ class Node:
     
     @state.setter
     def state(self, problem):
-        self._state = problem
+        if isinstance(problem, Problem):
+            self._state = problem
+        else:
+            print('Un Nodo necesita tener un objeto de clase Problem como estado.')
  
     def expand(self):
         """Regresa una lista con todos los posibles estados siguientes a partir del estado actual 
         del problema.
         """
         return self._state.expand()
+    
+    def f(self, w):
+        return self.cost + w*self._state.h()
     
     def __str__(self):
         return str(self._state)
@@ -112,6 +125,9 @@ class Puzzle8(Problem):
             print('Sólo se puede asignar una sóla vez cada dígito del 1-8 y el caracter "o"')
             x = 'x'
             self._state = [[x,x,x],[x,x,x],[x,x,x]]
+
+    def h(self):
+        return self.manhattan()
     
     def __str__(self):
         str = ''
@@ -119,16 +135,16 @@ class Puzzle8(Problem):
             str += f'{row}\n'
         return str[:-1]
     
-    def get_hole_coords(self):
-        """Regresa las coordenadas de la casilla vacía"""
+    def get_piece_coords(self, piece):
+        """Regresa las coordenadas de la pieza brindada"""
         for row in self.state:
             for i in row:
-                if i == 'o':
+                if i == piece:
                     return row.index(i), self.state.index(row)
         return -1, -1
 
     def action(self, action):
-        x, y = self.get_hole_coords()
+        x, y = self.get_piece_coords(piece='o')
         if x == -1:
             print('tablero vacío')
             return
@@ -149,3 +165,18 @@ class Puzzle8(Problem):
         child.state[y][x] = child.state[new_y][new_x]
         child.state[new_y][new_x] = 'o'
         return child, action
+    
+    def manhattan(self):
+        c = 0
+        for piece in {1,2,3,4,5,6,7,8,'o'}:
+            c += self.manhattan_piece(piece=piece)
+        return c
+    
+    def manhattan_piece(self, piece):
+        bad_x, bad_y    = self.get_piece_coords(piece)
+
+        if piece == 'o':
+            piece = 9
+        good_x, good_y  = (piece - 1)  % 3, (piece - 1) // 3
+
+        return abs(bad_y - good_y) + abs(bad_x - good_x)
