@@ -3,17 +3,15 @@ from problems import Puzzle8, Node
 from bfs import bfs
 from datetime import datetime
 
-from queue import PriorityQueue
+dir_path = os.path.dirname(os.path.realpath(__file__))
+log_file = os.path.join(dir_path, 'logs', 'log.txt')
 
 def main():
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    log_file = os.path.join(dir_path, 'logs', 'log.txt')
-
     initial_state = [[1,'o',2],
                      [6, 3 ,4],
                      [7, 5 ,8]]    
-    queue = 'priority'
-    w = 0.8
+    queue = 'priority' # Puedes elegir entre 'lifo', 'fifo' ó 'priority'
+    w = 0 # El peso para A* pesado.Poner `None` si la cola es fifo o lifo para eficiencia
     p = Puzzle8(initial_state)
 
     with open(log_file, 'w') as f:
@@ -26,36 +24,16 @@ def main():
 
     n, n_expandidos = bfs(p, queue=queue, w=w)
     
-    c = 0
-    while n:
-        with open(log_file, 'a') as f:
-            f.write(f'{n}\n\n')
-        n = n.parent
-        c += 1
-
+    n_movimientos = 0
     with open(log_file, 'a') as f:
-            f.write(f'Finaliza partida a las {datetime.now().strftime("%H:%M:%S")}\n')
-            f.write(f'Total de Movimientos: {c}\n')
-            f.write(f'Total de Nodos Expandidos: {n_expandidos}\n')
+        while n:
+            f.write(f'{n}\n\n')
+            n = n.parent
+            n_movimientos += 1
 
-def test_pqueue():
-    s1 = [[1, 2, 3],
-          [4, 5, 6],
-          [7, 8, 'o']] 
-    
-    s2 = [[1, 2, 3],
-          [4, 5, 6],
-          [7, 'o',8]] 
-    
-    p1 = Puzzle8(s1)
-    p2 = Puzzle8(s2)
-
-    q = PriorityQueue()
-    q.put(Node(p1))
-    q.put(Node(p2))
-
-    print(q.get())
+        f.write(f'Finaliza partida a las {datetime.now().strftime("%H:%M:%S")}\n')
+        f.write(f'Total de Movimientos: {n_movimientos}\n')
+        f.write(f'Total de Nodos Expandidos: {n_expandidos}\n')
 
 if __name__ == '__main__':
     main()
-    # test_pqueue()

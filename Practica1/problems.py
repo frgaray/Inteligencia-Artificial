@@ -27,6 +27,10 @@ class Problem(ABC):
     def action(self, action):
         """Aplica la acción indicada al estado actual del problema."""
         ...
+    
+    @abstractmethod
+    def h(self):
+        ...
 
     def expand(self):
         """
@@ -51,12 +55,13 @@ class Node:
     priority: int
     item: Any=field(compare=False)
 
-    def __init__(self, problem, parent=None, action=None, cost=1, w=1):
-        self.state    = problem
-        self.parent   = parent
-        self.action   = action
-        self.cost     = cost
-        self.priority = self.f(w)
+    def __init__(self, problem, parent=None, action=None, cost=1, w=None):
+        self.state        = problem
+        self.parent       = parent
+        self.action       = action
+        self.cost         = cost
+        if w or w == 0:
+            self.priority = self.f(w)
     
     @property
     def state(self):
