@@ -1,137 +1,163 @@
+import itertools
 import numpy  as np
 import pandas as pd
 
-class HMM():
+class FrequentistHMM():
 
-    prior_counts = {}
+    prior_counts = pd.Series()
 
-    priors = pd.DataFrame()
+    priors = pd.Series()
 
-    trans_counts = {}
+    trans_counts = pd.DataFrame(dtype=int)
 
     trans_matrix = pd.DataFrame()
 
-    sensor_counts = {}
-
-    possible_inputs = {}
+    sensor_counts = pd.DataFrame(dtype=int)
 
     sensor_matrix = pd.DataFrame()
-
-    def count_transition_frequencies(self, y_i):
-        """Método Auxiliar"""
-        y_i = y_i.split()
-        y_i_len = len(y_i) - 1
-
-        for index, output in enumerate(y_i):
-            if output in self.prior_counts:
-                self.prior_counts[output] += 1
-            else:
-                self.prior_counts[output] = 1
-
-            if index == y_i_len:
-                break
-
-            transition = f'{output}->{y_i[index+1]}'
-            if transition in self.trans_counts:
-                self.trans_counts[transition] += 1
-            else:
-                self.trans_counts[transition] = 1
-
-    def count_sensor_frequencies(self, data):
-        """Auxiliar"""
-        for index, row in data.iterrows():
-            x_i = row[0]
-            y_i = row[1]
-            for x, y in zip(x_i.split(), y_i.split()):
-                observation = f'{x}={y}'
-                if observation in self.sensor_counts:
-                    self.sensor_counts[observation] += 1
-                else:
-                    self.sensor_counts[observation] = 1
-                
-                if x not in self.possible_inputs:
-                    self.possible_inputs[x] = 'o'
 
     def __init__(self, data):
         if not isinstance(data, pd.DataFrame):
             raise Exception('Un HMM necesita un pd.DataFrame como entrada con sólo dos columnas. La primera X y la segunda Y.')
-        X = data.iloc[ : , 0]
         y = data.iloc[ : , 1]
 
+        self.set_trans_counts(y)
+        self.set_sensor_counts(data)
+        self.set_priors()
+        self.set_trans_matrix()
+        self.set_sensor_matrix()
+
+    def set_trans_counts(self, y):
         y.apply(self.count_transition_frequencies)
 
+    def count_transition_frequencies(self, y_i):
+        """Método Auxiliar de `set_trans_counts`.
+        Se pobla una matriz de conteo de las frecuencia de las transiciones de los valores de interés
+        (@trans_counts).
+        Además se pobla un vector de conteo sobre frecuencias de las apariciones generales de los
+        valores de interés (@prior_counts).
+        """
+        for first, second in itertools.pairwise(y_i.split()):
+            if first in self.prior_counts.index:
+                self.prior_counts.loc[first] += 1
+            else:
+                self.prior_counts.loc[first] = 1
+            
+            index   = self.trans_counts.index
+            columns = self.trans_counts.columns
 
-        self.trans_matrix = False
-        self.priors = False
-        self.count_sensor_frequencies(data)
+            if first in index and second in columns:
+                self.trans_counts.loc[first, second] += 1
+            else:
+                self.trans_counts.loc[first, second] = 1
 
-        self.sensor_matrix = False
+    def set_sensor_counts(self, data):
+        """Auxiliar de constructor.
+        Se pobla una matriz de conteo de las apariciones de un valor de interés dada una
+        observación (@sensor_counts).
+        """
+        for index, row in data.iterrows():
+            x_i = row[0].split()
+            y_i = row[1].split()
 
+            if len(x_i) != len(y_i):
+                print(f'La fila con índice="{index}" no tiene entradas válidas.\nSe ignorará')
+                continue
+
+            for input, output in zip(x_i, y_i):
+                index   = self.sensor_counts.index
+                columns = self.sensor_counts.columns
+
+                if input in index and output in columns:
+                    self.sensor_counts.loc[input, output] += 1
+                else:
+                    self.sensor_counts.loc[input, output] = 1
+
+    def set_priors(self):
+        """Auxiliar de constructor.
+        Normaliza el vector de conteos a priori (@priors)
+        """
+        self._priors = self.prior_counts.apply(lambda x: x / self.prior_counts.sum())
+
+    def set_trans_matrix(self):
+        self._trans_matrix = self.get_probs_matrix(self.trans_counts)
+
+    def set_sensor_matrix(self):
+        self._sensor_matrix = self.get_probs_matrix(self.sensor_counts)
+
+    def get_probs_matrix(self, count_matrix):
+        """Auxiliar para `set_trans_matrix` y `set_sensor_matrix`.
+        Pobla la matriz de probabilidades según la matriz de conteo dada.
+        Se hizo especialmente para las matrices de conteo `trans_counts` y `sensor_counts`.
+
+        Se normaliza sumando sobre axis=1.
+
+        La manera de lidiar con observaciones que no se observaron en @count_matrix es usando la
+        fórmula:
+
+            (prob(observación) + 1)
+           -------------------------
+           observaciones_totales + n
+        
+        donde "prob(observación)" es igual a 0 cuando no se contó ninguna aparición.
+        """
+        input_keys  = count_matrix.index
+        output_keys = count_matrix.columns
+        prob_matrix = pd.DataFrame()
+
+        totals = self.total_ocurrences(count_matrix)
+        penalizer = self.get_penalizer(count_matrix)
+        for input in input_keys:
+            for output in output_keys:
+                numerator = count_matrix.loc[input, output]
+                if pd.isna(numerator):
+                    numerator = 0
+                prob_matrix.loc[input, output] = (numerator + 1) / (totals[input] + penalizer)
+        return prob_matrix
+
+    
+    def total_ocurrences(self, count_matrix):
+        """Auxiliar de `get_probs_matrix`"""
+        return count_matrix.apply(np.sum, axis=1) 
+    
+    def get_penalizer(self, count_matrix):
+        """Auxiliar de `get_probs_matrix`"""
+        return len(count_matrix.columns)
+    
     @property
     def trans_matrix(self):
         return self._trans_matrix
     
-    def count_total_transitions(self):
-        """Auxiliar"""
-        totals = {}
-        for key in self.prior_counts.keys():
-            totals[key] = 0
-            for transition in self.trans_counts.keys():
-                if key == transition.split('->')[0]:
-                    totals[key] += self.trans_counts[transition]
-        return totals
-    
-    def get_penalizer(self, first):
-        """Auxiliar"""
-        penalizer = 0
-        for second in self.prior_counts.keys():
-            transition = f'{first}->{second}'
-            if transition not in self.trans_counts.keys():
-                penalizer += 1
-        return penalizer
- 
-    @trans_matrix.setter
-    def trans_matrix(self, dummy_arg):
-        keys = self.prior_counts.keys()
-        trans_matrix = pd.DataFrame(index=keys, columns=keys, dtype=float)
-
-        totals = self.count_total_transitions()
-        for first in keys:
-            penalizer = self.get_penalizer(first)
-            for second in keys:
-                numerator = 0
-                transition = f'{first}->{second}'
-                if transition in self.trans_counts.keys():
-                    numerator = self.trans_counts[transition]
-                trans_matrix.loc[first, second] = (numerator + 1) / (totals[first] + penalizer)
-
-
-        self._trans_matrix = trans_matrix
-    @property
-    def priors(self):
-        return self._priors
-
-    @priors.setter
-    def priors(self, dummy_arg):
-        ...
-
     @property
     def sensor_matrix(self):
         return self._sensor_matrix
+    
+    @property
+    def priors(self):
+        return self._priors
+    
+    def viterbi_predict(self, x):
+        x = x.split()
+        x_1 = x.pop(0)
+        deltas = pd.DataFrame(self.priors).T
+        if x_1 in self.sensor_matrix.index:
+            deltas = pd.DataFrame(self.sensor_matrix.loc[x_1, :]).T * self.priors.T
 
-    @sensor_matrix.setter
-    def sensor_matrix(self, dummy_arg):
-        input_keys  = self.possible_inputs.keys()
-        output_keys = self.prior_counts.keys()
-        sensor_matrix = pd.DataFrame(index=input_keys, columns=output_keys, dtype=float)
-        for input in input_keys:
-            for output in output_keys:
-                observation = f'{input}={output}'
-                probability = 1
-                if observation in self.sensor_counts.keys():
-                    probability = self.sensor_counts[observation] / self.prior_counts[output]
-                sensor_matrix.loc[input , output] = probability
-        self._sensor_matrix = sensor_matrix
+        for index, x_i in enumerate(x):
+            ...
+            
+
+        # deltas = pd.concat([deltas, pd.DataFrame(self.sensor_matrix.loc[x[0], :]).T])
+        print(self.priors)
+        print(deltas)
+        ...
+ 
+
+
+
+
+
+
 
 
 

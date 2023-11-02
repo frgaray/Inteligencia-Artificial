@@ -1,6 +1,6 @@
 import numpy  as np
 import pandas as pd
-from HMM import HMM
+from HMM import FrequentistHMM
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 from os.path import abspath, dirname, join
@@ -15,18 +15,21 @@ def main():
     
     # X_train, X_test, y_train, y_train = train_test_split(X, y, test_size=0.3, random_state=1)
     data.iloc[ : , 0] = data.iloc[ : , 0].str.lower()
-    hmm = HMM(data)
+    hmm = FrequentistHMM(data.head())
 
     print(hmm.sensor_matrix)
+    # print(hmm.trans_matrix)
+    # print(hmm.priors)
 
+    hmm.viterbi_predict("aaaa")
 
 
 
 def test():
-    memo = {'ovnis': 1}
-    # memo['ovnis'] += 1
-    memo['perros'] = 1
-    print(memo['perros'])
+    s = "Hola a todos"
+    s = s.split()
+    print(s.pop(0))
+    print(s)
 
 if __name__ == '__main__':
     main()
