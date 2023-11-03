@@ -7,10 +7,8 @@
 
 Se recomienda iniciar leyendo el archivo `main.py`.
 
-- En la carpeta `logs`: Están las partidas para los incisos 2, 3 y 5 de la práctica (usando lifo/fifo/priority queues) en un archivo `.txt` para cada una. Además de la partida respectiva al nombre del archivo, en las últimas líneas del texto está el número de nodos expandidos y el número de movimientos en los cuáles resuelve el problema.
+- En la carpeta `data`: Está el csv a entrenar/predecir de la práctica.
 
-- En el archivo `main.py`: Está el código maestro para la ejecución de una partida general de 8-Puzzle, en la cual se deben especificar parámetros como el estado inicial y el tipo de cola a usar para el algoritmo Best-First Search.
+- En el archivo `main.py`: Está el código maestro para la ejecución del entrenamiento y la evaluación del Modelo Oculto de Márkov (frecuentista) con los datos de la práctica.
 
-- En el archivo `bfs.py`: Está la implementación del algoritmo Best-First Search.
-
-- En el archivo `problems.py`: Está el código de clases que representan problemas para resolver usando Best-First Search.
+- En el archivo `HMM.py`: Está la clase para crear un Modelo Oculto de Márkov Frecuentista, la cual tiene un método para estimar categorías de nuevas observaciones usando el algoritmo de Viterbi (en `FrequentistHMM.viterbi_predict`)
