@@ -3,8 +3,12 @@
 - García López Frida Fernanda
 - Hernández Rojas Saúl Alejandro
 
-### Archivos
+### Instrucciones
+1. Instalar dependencias: numpy, pandas, sklearn.
 
+2. Correr el archivo `main.py`.
+
+### Archivos
 Se recomienda iniciar leyendo el archivo `main.py`.
 
 - En la carpeta `data`: Está el csv a entrenar/predecir de la práctica.
